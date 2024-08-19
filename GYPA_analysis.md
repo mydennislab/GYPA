@@ -1,15 +1,13 @@
 
 # GYPA/GYPB SVs in chimpanzee
 
-## 1. Hg38 as reference
-
 We genotyped two candidate SNPs and asses if they were in LD with a SV. The two candidate SNPs we identify in GYPA are chr4:145039806 and chr4:145040845 in Hg19.
 
 In GRCh38, the coordinates are:
 - chr4:145039806 -> chr4:144118653 
 - chr4:145040845 -> chr4:144119692
 
-### 1.1 Assemblies
+## 1. Analyzing assemblies
 
 ```bash
 cd /share/dennislab/users/dcsoto/other/GYPA/assemblies
@@ -38,7 +36,7 @@ for file in *.20231122.fasta; do samtools faidx $file; done
 for file in *.20231205.fasta; do samtools faidx $file; done
 ```
 
-#### 1.1.1 Alignments
+### 1.1. Alignments
 
 First, we compared chimpanzee assemblies to Hg38 using alignments.
 
@@ -93,7 +91,7 @@ samtools view -Sb PanTro6.hg38.plotsr.bam chr4:143723743-144212365 > PanTro6.hg3
 samtools index PanTro6.hg38.plotsr.GYPA_GYPB.bam
 ```
 
-#### 1.1.2 liftOff
+### 1.2 liftOff
 
 Second, we directly lifted over GYP genes to assess their location in each assembly independently of Hg38 structure.
 
@@ -123,7 +121,7 @@ liftoff -copies -sc 0.9 -mm2_options="-t 64 -a --end-bonus 5 --eqx -N 50 -p 0.5 
 liftoff -copies -sc 0.9 -mm2_options="-t 64 -a --end-bonus 5 --eqx -N 50 -p 0.5 -r 2k -z 5000 -x asm20" -g gencode.v43.annotation.GYP_genes.gff3 -o mPanPan1.alt.20231122.gff ../assemblies/mPanPan1.alt.cur.20231122.fasta ../references/hg38.noalt.fa
 ```
 
-### 1.2 Long reads
+## 2. Analyzing Long reads
 
 We directly analyzed long reads to genotype the candidate SNPs.
 
@@ -178,24 +176,7 @@ bcftools view AG18359_bionano.hg38.vcf.gz -r chr4:143723743-144212365 | bcftools
 bcftools query -f '%CHROM\t%POS\t%INFO/END\t%INFO/SVTYPE\n' AG18359_bionano.hg38.GYPA_GYPB.vcf > AG18359_bionano.hg38.GYPA_GYPB.bed
 ```
 
-We looked for SNPs at candidate SNPs sites as well as paralogous sites in long reads.
-
-**C>A at hg19:chr4:145040845/hg38:chr4:144119692**
-
-We selected a 130 bp region covering GYPA exon 3 for BLAT.
-- GYPA: chr4:144119671-144119800 
-- GYPE: chr4:143879595-143879721
-- GYPB: chr4:144000368-144000494
-
-We aligned DNA from these regions using Mega/MUSCLE to find coordinates of candidate SNPs.
-- GYPA hg19:chr4:145040845/hg38:chr4:144119692
-- GYPE hg38:chr4:143879616
-- GYPB hg38:chr4:144000389
-
-#### 1.2.1 Calling SNVs per contig
-
-We called SNVs and SVs using long reads as contigs in AG18354.
-
+We called SNVs and SVs using long reads as 'contigs' in AG18354:
 ```bash
 cd /share/dennislab/users/dcsoto/other/GYPA/long_reads
 
@@ -239,31 +220,9 @@ samtools merge -f -o candidate_reads.bam ${candidate_reads}
 samtools index candidate_reads.bam
 ```
 
-```bash
-# calling SVs per read
-conda activate variants
-mkdir -p SVs_Hg38_AG18354
+## 3. Analyzing copy number variants
 
-for num in {00..90}; do
-    svim-asm haploid --min_sv_size 30 SVs_Hg38_AG18354/${num} AG18354.hifi_reads.hg38.srt.GYPA_only_${num}.bam ../references/hg38.noalt.fa
-done
-
-conda activate jasmine
-ls SVs_Hg38_AG18354/*/variants.vcf > filelist.txt
-jasmine spec_len=10 file_list=filelist.txt out_file=AG18354.hifi_reads.hg38.srt.GYPA_only.svs.vcf
-grep -v "SVTYPE=INS" AG18354.hifi_reads.hg38.srt.GYPA_only.svs.vcf > AG18354.hifi_reads.hg38.srt.GYPA_only.svs.dels.vcf
-
-# I manually removed the last variant which is a short-tandem repeat expansion
-
-# To run SVtyper, we neede to add "CIPOS=-100,100;CIEND=-100,100" to each SV entry in vcf file.
-awk 'BEGIN{OFS="\t"}{if($0~"^#"){print}else{$8=$8";CIPOS=-100,100;CIEND=-100,100"; print $0}}' AG18354.hifi_reads.hg38.srt.GYPA_only.svs.dels.vcf > AG18354.hifi_reads.hg38.srt.GYPA_only.svs.dels.cipos.vcf
-```
-
-> More info about CIPOS in this GitHub issue: https://github.com/hall-lab/svtyper/pull/111
-
-Next, we genotyped variants in `AG18354.hifi_reads.hg38.srt.GYPA_only.svs.dels.cipos.vcf` in Illumina reads (next section).
-
-### 1.3 FastCN
+### 3.1 FastCN
 
 Downloading samples from de Manuel 2016 and Prado-Martinez 2013:
 ```bash
@@ -399,91 +358,9 @@ python3 genotype_cn_parallel.py --path results/windows --genes regions.bed --out
 python3 genotype_cn_parallel.py --path results/windows --genes segdups.bed --output segdups.cn.tsv -t 64
 ```
 
-BigBed files were stored in BioShare: `https://bioshare.bioinformatics.ucdavis.edu/bioshare/view/Dennis_UCSC_Browser_Files/dcsoto/GYPA/FastCN/`
+First, BigBed files were stored in BioShare: `https://bioshare.bioinformatics.ucdavis.edu/bioshare/view/Dennis_UCSC_Browser_Files/dcsoto/GYPA/FastCN/`
 
-Files were uplaoded to the UCSC Genome Browser:
+Second, files were uplaoded to the UCSC Genome Browser:
 ```bash
 for file in *CN.bb; do name=$(basename -s .depth.1kb.bed.CN.bb $file); echo "track type=bigBed name=\"$name\" description=\"FastCN CN ${name}\" itemRgb=On bigDataUrl=\"https://bioshare.bioinformatics.ucdavis.edu/bioshare/download/cpqqdfge5lfvovq/dcsoto/GYPA/FastCN/${name}.depth.1kb.bed.CN.bb\""; done
-```
-
-## 2. PanTro6 as reference
-
-### 2.1 Long reads
-
-```bash
-cd /share/dennislab/users/dcsoto/other/GYPA/GYPA_long
-
-# AG18359 ONT to PanTro6 | Pore chemistry: r941_prom_sup_g5014
-minimap2 -t 64 -ax map-ont ../references/panTro6.fa /share/dennislab/users/dcsoto/ms_asm/0_ont/AG18359.guppy_5.0.11.fastq.gz | samtools view -F 4 -b - | samtools sort > AG18359.guppy_5.0.11.panTro6.srt.bam
-samtools index AG18359.guppy_5.0.11.panTro6.srt.bam
-samtools view -Sb AG18359.guppy_5.0.11.panTro6.srt.bam chr4:141934474-142246523 > AG18359.guppy_5.0.11.panTro6.srt.GYPA_GYPB.bam
-samtools index AG18359.guppy_5.0.11.panTro6.srt.GYPA_GYPB.bam
-
-# AG18354 PacBio HiFi to PanTro6
-minimap2 -t 64 -ax map-ont ../references/panTro6.fa AG18354.hifi_reads.fastq.gz | samtools view -F 4 -b - | samtools sort > AG18354.hifi_reads.panTro6.srt.bam
-samtools index AG18354.hifi_reads.panTro6.srt.bam
-samtools view -Sb AG18354.hifi_reads.panTro6.srt.bam chr4:141934474-142246523 > AG18354.hifi_reads.panTro6.srt.GYPA_GYPB.bam
-samtools index AG18354.hifi_reads.panTro6.srt.GYPA_GYPB.bam
-```
-
-### 2.2 QuickMer2
-
-First, we obtained SegDups in PanTro6:
-```bash
-module load samtools/1.9
-samtools faidx /share/dennislab/databases/assemblies/panTro6/panTro6.fa
-
-cd /share/dennislab/programs/sedef
-./sedef.sh -o /share/dennislab/databases/assemblies/panTro6/sedef -j5 /share/dennislab/databases/assemblies/panTro6/panTro6.fa
-```
-
-SDs available at `/share/dennislab/databases/assemblies/panTro6/sedef/final.bed`
-
-We converted SDs from BEDPE to BED:
-```bash
-cd /share/dennislab/databases/assemblies/panTro6/sedef/
-#python3 /share/dennislab/programs/sedef/sedef_to_bed_mod.py final.bed panTro6.SDs.bed panTro6.SDs.lowid.bed
-python3 sedef_to_bed_mod.py final.bed panTro6.SDs.bed panTro6.SDs.lowid.bed # we removed first line in panTro6.SDs.bed
-```
-
-> Additionally, we run BISER as follow: (but we didn't use this output)
-> ```bash
-> conda create -n biser
-> conda activate biser
-> conda install python=3.7
-> pip install biser
-> conda install -c bioconda samtools
-> cd /share/dennislab/databases/assemblies/panTro6/biser
-> conda activate biser 
-> biser --output out -t 10 --temp temp /share/dennislab/databases/assemblies/panTro6/panTro6.fa 
-> ```
-
-Then, we prepared control regions (regions known to be diploid copy-number fixed, i.e., removing sex chromosomes, mithocondrial DNA, and segdups):
-```bash
-cd /share/dennislab/databases/data/quickmer-chimp
-
-bedtools complement -i /share/dennislab/databases/assemblies/panTro6/sedef/panTro6.SDs.bed -g /share/dennislab/databases/assemblies/panTro6/panTro6.fa.fai | grep -v "chrM\|chrX\|chrY" > control/panTro6.control.bed
-```
-
-Finally, we prepared samples:
-```bash
-cd /share/dennislab/databases/data/quickmer-chimp/fastqs
-
-cat /share/dennislab-backedup/illumina/wgs/chimp/AG18359/hwftp.novogene.com/C202SC19030370.DHG.PE150.20190412.P202SC19030370-01-01/data_release/C202SC19030370/raw_data/AG18359/AG18359_USD16090428L_HKGF3DSXX_L4_1.fq.gz /share/dennislab-backedup/illumina/wgs/chimp/AG18359/hwftp.novogene.com/C202SC19030370.DHG.PE150.20190412.P202SC19030370-01-01/data_release/C202SC19030370/raw_data/AG18359/AG18359_USD16090428L_HKGF3DSXX_L4_2.fq.gz > AG18359.fastq.gz
-
-cat /share/dennislab-backedup/illumina/wgs/chimp/S003641/S003641_S11_L002_R1_001.fastq.gz /share/dennislab-backedup/illumina/wgs/chimp/S003641/S003641_S11_L002_R2_001.fastq.gz > S003641.fastq.gz
-```
-
-Running QuicKmer2 in chimpanzees:
-```bash
-cd /share/dennislab/databases/data/quickmer-chimp
-
-conda activate variants # python3 with pandas and argparse, and samtools + bedToBigBed
-export PATH=/share/dennislab/databases/data/quickmer-t2t/QuicK-mer2/:$PATH
-
-/share/dennislab/users/dcsoto/Miniconda3/bin/snakemake  \
---snakefile quickmer2.smk \
---config reference=reference/panTro6.fa control=control/panTro6.control.bed \
-input=fastqs outdir=results_w500 distance=1 window=500 \
--p -j 20
 ```
