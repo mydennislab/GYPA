@@ -213,7 +213,7 @@ bcftools merge $vcfs -o AG18354.hifi_reads.hg38.srt.GYPA_only.snps.vcf
 bgzip AG18354.hifi_reads.hg38.srt.GYPA_only.snps.vcf
 tabix AG18354.hifi_reads.hg38.srt.GYPA_only.snps.vcf.gz
 
-# extracting all reads with the candidate alle and  
+# extracting all reads with the candidate allele
 candidate_reads=$(bcftools view -r chr4:144119692-144119693 AG18354.hifi_reads.hg38.srt.GYPA_only.snps.vcf.gz | bcftools query -f'[%CHROM\t%POS\t%REF\t%ALT\t%SAMPLE\t%GT\n]' | grep -w "1/1" | cut -f5 | tr '\n' ' ')
 
 samtools merge -f -o candidate_reads.bam ${candidate_reads}
