@@ -1,5 +1,5 @@
 
-# GYPA/GYPB SVs in chimpanzee
+# GYPA SVs in chimpanzee
 
 We genotyped two candidate SNPs and asses if they were in LD with a SV. The two candidate SNPs we identify in GYPA are chr4:145039806 and chr4:145040845 in Hg19.
 
@@ -333,7 +333,7 @@ ln -s /share/dennislab/databases/data/great_ape_GP/*gz .
 
 We genotyped the copy number of GYPA full lenght transcript and the copy number of the 16 kbp deletion and 3 kbp deletion regions. Considering that paralog-specific copy number estimates (QuickMer2) are noisy in this region, we used gene-family copy numbers (FastCN/WSSD).
 
-We re-run FastCN in samples from the Great Ape Project:
+We run FastCN in samples from the Great Ape Project:
 ```bash
 cd /share/dennislab/users/dcsoto/other/GYPA/fastCN/
 
