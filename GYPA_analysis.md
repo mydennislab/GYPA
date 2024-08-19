@@ -331,7 +331,7 @@ ln -s /share/dennislab-backedup/illumina/wgs/chimp/S003641/S003641_S11_L002_R2_0
 ln -s /share/dennislab/databases/data/great_ape_GP/*gz .
 ```
 
-We genotyped the copy number of GYPA full lenght transcript and the copy number of the 16 kbp deletion and 3 kbp deletion regions. Considering that QuickMer2 is noisy in this region (and PanTro6 is not a good reference), we used gene-family copy numbers (FastCN/WSSD).
+We genotyped the copy number of GYPA full lenght transcript and the copy number of the 16 kbp deletion and 3 kbp deletion regions. Considering that paralog-specific copy number estimates (QuickMer2) are noisy in this region, we used gene-family copy numbers (FastCN/WSSD).
 
 We re-run FastCN in samples from the Great Ape Project:
 ```bash
